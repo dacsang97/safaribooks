@@ -34,19 +34,18 @@ archives:
 
 brews:
   - name: safaribooks
-    tap:
+    repository:
       owner: dacsang97
       name: homebrew-tap
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     url_template: "https://github.com/dacsang97/safaribooks/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     commit_author:
-      name: goreleaserbot
-      email: bot@goreleaser.com
+      name: dacsang97
+      email: dacsang97@gmail.com
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: "https://github.com/dacsang97/safaribooks"
     description: "Download and generate an EPUB of your favorite Safari Books Online titles"
-    license: "MIT"
     test: |
       system "#{bin}/safaribooks --version"
     install: |
