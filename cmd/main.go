@@ -9,10 +9,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+var version = "dev"
+
 func main() {
 	app := &cli.App{
-		Name:  "safaribooks",
-		Usage: "Download and generate an EPUB of your favorite Safari Books Online titles.",
+		Name:    "safaribooks",
+		Usage:   "Download and generate an EPUB of your favorite Safari Books Online titles.",
+		Version: version,
 		Commands: []*cli.Command{
 			{
 				Name:      "download",
