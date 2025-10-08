@@ -1,5 +1,7 @@
 # Safari Books Downloader
 
+[![CI](https://github.com/dacsang97/safaribooks/actions/workflows/ci.yml/badge.svg)](https://github.com/dacsang97/safaribooks/actions/workflows/ci.yml)
+
 A simple CLI tool to download and generate EPUB files from Safari Books Online.
 
 ## Features
