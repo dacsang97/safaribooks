@@ -14,9 +14,23 @@ A simple CLI tool to download and generate EPUB files from Safari Books Online.
 
 ## Installation
 
+### Using Homebrew (macOS & Linux)
+
 ```bash
-go build -o safaribooks ./cmd/main.go
+brew install dacsang97/tap/safaribooks
 ```
+
+### Using Go
+
+If you have Go installed, you can install safaribooks by running:
+
+```bash
+go install github.com/dacsang97/safaribooks@latest
+```
+
+### Download Binary
+
+If you don't have Go installed, you can download the binary from [here](https://github.com/dacsang97/safaribooks/releases).
 
 ## Exporting Cookies
 
@@ -78,8 +92,7 @@ Before you can download books, you need to export your cookies from Safari Books
 
 ```
 safaribooks/
-├── cmd/
-│   └── main.go              # CLI entry point
+├── main.go                  # CLI entry point
 ├── internal/
 │   ├── downloader/          # Core download logic
 │   ├── epub/                # EPUB generation
@@ -94,7 +107,7 @@ safaribooks/
 
 The project is organized into several packages with clear responsibilities:
 
-- **cmd**: Command-line interface
+- **main.go**: Command-line interface entry point
 - **internal/downloader**: Orchestrates the download process
 - **internal/epub**: Generates EPUB files
 - **internal/html**: Processes and transforms HTML content
