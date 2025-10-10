@@ -189,14 +189,18 @@ func LoadCookies(path string) (map[string]string, error) {
 	}
 
 	// Fall back to Cookie-Editor format (flat JSON map)
-	var cookies map[string]string
-	if err := json.Unmarshal(data, &cookies); err != nil {
+	var cookiesArr []J2TeamCookie
+	if err := json.Unmarshal(data, &cookiesArr); err != nil {
 		return nil, errors.New("unsupported cookie format: unable to parse as J2Team or Cookie-Editor format")
 	}
 
-	if len(cookies) == 0 {
+	if len(cookiesArr) == 0 {
 		return nil, errors.New("cookies file is empty")
 	}
 
+	cookies := make(map[string]string, len(cookiesArr))
+	for _, cookie := range cookiesArr {
+		cookies[cookie.Name] = cookie.Value
+	}
 	return cookies, nil
 }
