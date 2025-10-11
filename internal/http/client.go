@@ -16,19 +16,30 @@ import (
 )
 
 const (
-	safariBaseURL    = "https://learning.oreilly.com"
-	profileURL       = safariBaseURL + "/profile/"
 	defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
 		"(KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
 )
 
 // Client represents an HTTP client for Safari Books API
 type Client struct {
-	client *resty.Client
+	client     *resty.Client
+	siteURL    string
+	profileURL string
 }
 
 // NewClient creates a new HTTP client with authentication
-func NewClient(cookiesPath string) (*Client, error) {
+func NewClient(cookiesPath, siteURL string) (*Client, error) {
+	// Set default site URL if not provided
+	if siteURL == "" {
+		siteURL = "learning.oreilly.com"
+	}
+
+	// Ensure siteURL has protocol
+	if !strings.HasPrefix(siteURL, "http://") && !strings.HasPrefix(siteURL, "https://") {
+		siteURL = "https://" + siteURL
+	}
+
+	profileURL := siteURL + "/profile/"
 	cookies, err := utils.LoadCookies(cookiesPath)
 	if err != nil {
 		return nil, utils.WrapError(err, "load cookies")
@@ -45,7 +56,7 @@ func NewClient(cookiesPath string) (*Client, error) {
 		SetRedirectPolicy(resty.FlexibleRedirectPolicy(10))
 
 	// Set cookies
-	base, _ := url.Parse(safariBaseURL)
+	base, _ := url.Parse(siteURL)
 	var cookieSet []*http.Cookie
 	for name, value := range cookies {
 		cookieSet = append(cookieSet, &http.Cookie{
@@ -65,18 +76,20 @@ func NewClient(cookiesPath string) (*Client, error) {
 	// Set default headers
 	client.SetHeaders(map[string]string{
 		"Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-		"Referer":                   safariBaseURL + "/login/unified/?next=/home/",
+		"Referer":                   siteURL + "/login/unified/?next=/home/",
 		"Upgrade-Insecure-Requests": "1",
 		"User-Agent":                defaultUserAgent,
 	})
 
 	// Check authentication
-	if err := ensureAuthenticated(client); err != nil {
+	if err := ensureAuthenticated(client, profileURL); err != nil {
 		return nil, err
 	}
 
 	return &Client{
-		client: client,
+		client:     client,
+		siteURL:    siteURL,
+		profileURL: profileURL,
 	}, nil
 }
 
@@ -87,7 +100,7 @@ func (c *Client) Get(url string) (*resty.Response, error) {
 
 // GetBookInfo fetches book information from the API
 func (c *Client) GetBookInfo(bookID string) (models.BookInfo, error) {
-	apiURL := fmt.Sprintf("%s/api/v1/book/%s/", safariBaseURL, bookID)
+	apiURL := fmt.Sprintf("%s/api/v1/book/%s/", c.siteURL, bookID)
 
 	var info models.BookInfo
 	if err := utils.HandleJSONResponseWithClient(c.client, apiURL, &info, "API: unable to retrieve book info"); err != nil {
@@ -99,7 +112,7 @@ func (c *Client) GetBookInfo(bookID string) (models.BookInfo, error) {
 
 // GetBookChapters fetches all chapters for a book
 func (c *Client) GetBookChapters(bookID string) ([]models.Chapter, error) {
-	apiURL := fmt.Sprintf("%s/api/v1/book/%s/", safariBaseURL, bookID)
+	apiURL := fmt.Sprintf("%s/api/v1/book/%s/", c.siteURL, bookID)
 	var all []models.Chapter
 	pageURL := apiURL + "chapter/?page=1"
 
@@ -143,7 +156,7 @@ func (c *Client) GetBookChapters(bookID string) ([]models.Chapter, error) {
 }
 
 // ensureAuthenticated checks if the client is authenticated
-func ensureAuthenticated(client *resty.Client) error {
+func ensureAuthenticated(client *resty.Client, profileURL string) error {
 	resp, err := client.R().
 		SetHeader("User-Agent", defaultUserAgent).
 		Get(profileURL)

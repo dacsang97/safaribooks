@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	safarihttp "github.com/dacsang97/safaribooks/internal/http"
 	"github.com/dacsang97/safaribooks/internal/html"
+	safarihttp "github.com/dacsang97/safaribooks/internal/http"
 	"github.com/dacsang97/safaribooks/internal/models"
 	"github.com/dacsang97/safaribooks/pkg/utils"
 )
@@ -24,10 +24,11 @@ type Downloader struct {
 	cookiesPath string
 	booksDir    string
 	kindleMode  bool
+	siteURL     string
 	client      *safarihttp.Client
 }
 
-func NewDownloader(bookID, cookiesPath, booksDir string, kindleMode bool) (*Downloader, error) {
+func NewDownloader(bookID, cookiesPath, booksDir string, kindleMode bool, siteURL string) (*Downloader, error) {
 	if cookiesPath == "" {
 		cookiesPath = defaultCookiesFile
 	}
@@ -39,7 +40,7 @@ func NewDownloader(bookID, cookiesPath, booksDir string, kindleMode bool) (*Down
 		return nil, fmt.Errorf("create books directory: %w", err)
 	}
 
-	client, err := safarihttp.NewClient(cookiesPath)
+	client, err := safarihttp.NewClient(cookiesPath, siteURL)
 	if err != nil {
 		return nil, fmt.Errorf("create HTTP client: %w", err)
 	}
@@ -49,6 +50,7 @@ func NewDownloader(bookID, cookiesPath, booksDir string, kindleMode bool) (*Down
 		cookiesPath: cookiesPath,
 		booksDir:    booksDir,
 		kindleMode:  kindleMode,
+		siteURL:     siteURL,
 		client:      client,
 	}, nil
 }
@@ -129,7 +131,7 @@ func (d *Downloader) downloadChapters(bookPath string, chapters []models.Chapter
 			defer func() { <-sem }() // Release
 
 			// Create parser per goroutine to avoid race conditions
-			parser := html.NewParser("https://learning.oreilly.com", d.kindleMode)
+			parser := html.NewParser("https://"+d.siteURL, d.kindleMode)
 
 			if err := d.downloadChapter(oebpsPath, &chapters[i], i == 0, parser, bookPath); err != nil {
 				mu.Lock()
@@ -229,7 +231,7 @@ func (d *Downloader) resolveImageURL(chapter *models.Chapter, img string) string
 	apiV2 := strings.Contains(chapter.Content, "/api/v2/")
 
 	if apiV2 {
-		chapterBase = fmt.Sprintf("https://learning.oreilly.com/api/v2/epubs/urn:orm:book:%s/files", d.bookID)
+		chapterBase = fmt.Sprintf("https://%s/api/v2/epubs/urn:orm:book:%s/files", d.siteURL, d.bookID)
 		return strings.TrimSuffix(chapterBase, "/") + "/" + strings.TrimPrefix(img, "/")
 	}
 
@@ -413,8 +415,8 @@ func (d *Downloader) writeEPUBMetadata(bookInfo models.BookInfo, chapters []mode
 %s</manifest>
 <spine toc="ncx">%s</spine>
 </package>`, escapeXML(bookInfo.Title), authors, publishers, description,
-	firstNonEmpty(bookInfo.ISBN, bookInfo.Identifier, d.bookID),
-	escapeXML(bookInfo.Issued), coverMeta, manifest, spine)
+		firstNonEmpty(bookInfo.ISBN, bookInfo.Identifier, d.bookID),
+		escapeXML(bookInfo.Issued), coverMeta, manifest, spine)
 
 	// Build authors for TOC
 	tocAuthors := ""

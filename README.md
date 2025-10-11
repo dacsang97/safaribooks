@@ -10,7 +10,8 @@ A simple CLI tool to download and generate EPUB files from Safari Books Online.
 - Generate properly formatted EPUB files
 - Simple command-line interface
 - Support for Kindle-specific CSS tweaks
-- Auto-detect and support multiple cookie formats (Cookie-Editor, J2Team Cookies)
+- Support for multiple O'Reilly library sites (e.g., learning.oreilly.com, learning-oreilly-com.dclibrary.idm.oclc.org)
+- Auto-detect and support multiple cookie formats (Cookie-Editor, J2Team Cookies, browser extension exports)
 
 ## Installation
 
@@ -34,7 +35,7 @@ If you don't have Go installed, you can download the binary from [here](https://
 
 ## Exporting Cookies
 
-Before you can download books, you need to export your cookies from Safari Books Online. The tool supports two popular cookie export formats:
+Before you can download books, you need to export your cookies from Safari Books Online. The tool supports three popular cookie export formats:
 
 ### Option 1: Cookie-Editor (Recommended)
 
@@ -52,6 +53,10 @@ Before you can download books, you need to export your cookies from Safari Books
 4. Click "Export"
 5. Save the file (the tool will auto-detect this format)
 
+### Option 3: Browser Extension Export Format
+
+The tool also supports the standard browser extension export format (array of cookie objects) that many cookie export extensions use. Simply export your cookies in JSON format and save them as `cookies.json` or any other name.
+
 **Note:** The CLI automatically detects which format you're using, so you don't need to specify the format.
 
 ## Usage
@@ -65,14 +70,15 @@ Before you can download books, you need to export your cookies from Safari Books
 
 ### Options
 
-- `--cookies, -c`: Path to cookies file - supports Cookie-Editor and J2Team formats (default: "cookies.json")
+- `--cookies, -c`: Path to cookies file - supports Cookie-Editor, J2Team, and browser extension formats (default: "cookies.json")
 - `--output, -o`: Base directory where the Books folder will be created (default: "Books")
 - `--kindle`: Enable Kindle-specific CSS tweaks
+- `--site-url, -s`: O'Reilly library site URL (e.g., learning-oreilly-com.dclibrary.idm.oclc.org) (default: "learning.oreilly.com")
 
 ### Examples
 
 ```bash
-# Download a book with default settings (uses cookies.json)
+# Download a book with default settings (uses cookies.json and learning.oreilly.com)
 ./safaribooks download 1234567890
 
 # Download with Cookie-Editor format
@@ -81,11 +87,20 @@ Before you can download books, you need to export your cookies from Safari Books
 # Download with J2Team Cookies format
 ./safaribooks download 1234567890 --cookies learning.oreilly.com.json
 
+# Download with browser extension export format
+./safaribooks download 1234567890 --cookies dclibrary.json
+
+# Download from a different library site (e.g., DC Public Library)
+./safaribooks download 1234567890 --site-url learning-oreilly-com.dclibrary.idm.oclc.org --cookies dclibrary.json
+
 # Download with custom output directory
 ./safaribooks download 1234567890 --output /path/to/output
 
 # Download with Kindle optimizations
 ./safaribooks download 1234567890 --kindle
+
+# Download from library site with all options
+./safaribooks download 1234567890 --site-url learning-oreilly-com.dclibrary.idm.oclc.org --cookies dclibrary.json --output MyBooks --kindle
 ```
 
 ## Project Structure

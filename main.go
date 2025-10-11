@@ -38,6 +38,12 @@ func main() {
 						Name:  "kindle",
 						Usage: "Enable Kindle-specific CSS tweaks.",
 					},
+					&cli.StringFlag{
+						Name:    "site-url",
+						Aliases: []string{"s"},
+						Usage:   "O'Reilly library site URL (e.g., learning-oreilly-com.dclibrary.idm.oclc.org).",
+						Value:   "learning.oreilly.com",
+					},
 				},
 				Action: runDownloadAction,
 			},
@@ -93,9 +99,13 @@ func runDownloadAction(ctx *cli.Context) error {
 	}
 
 	kindleMode := ctx.Bool("kindle")
+	siteURL := ctx.String("site-url")
+	if siteURL == "" {
+		siteURL = "learning.oreilly.com"
+	}
 
 	// Create downloader
-	dl, err := downloader.NewDownloader(bookID, cookiesPath, outputDir, kindleMode)
+	dl, err := downloader.NewDownloader(bookID, cookiesPath, outputDir, kindleMode, siteURL)
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("unable to create downloader: %v", err), 1)
 	}

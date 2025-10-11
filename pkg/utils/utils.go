@@ -169,8 +169,22 @@ type J2TeamCookiesFile struct {
 	Cookies []J2TeamCookie `json:"cookies"`
 }
 
+// BrowserCookie represents a cookie in browser extension export format
+type BrowserCookie struct {
+	Name     string  `json:"name"`
+	Value    string  `json:"value"`
+	Domain   string  `json:"domain"`
+	Path     string  `json:"path"`
+	Secure   bool    `json:"secure"`
+	HttpOnly bool    `json:"httpOnly"`
+	SameSite string  `json:"sameSite"`
+	HostOnly bool    `json:"hostOnly"`
+	Session  bool    `json:"session"`
+	StoreID  *string `json:"storeId"`
+}
+
 // LoadCookies loads cookies from a JSON file and auto-detects the format
-// Supports both Cookie-Editor format (flat JSON) and J2Team Cookies format
+// Supports Cookie-Editor format (flat JSON), J2Team Cookies format, and browser extension export format
 func LoadCookies(path string) (map[string]string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -188,10 +202,21 @@ func LoadCookies(path string) (map[string]string, error) {
 		return cookies, nil
 	}
 
+	// Try browser extension export format (array of cookie objects)
+	var browserCookies []BrowserCookie
+	if err := json.Unmarshal(data, &browserCookies); err == nil && len(browserCookies) > 0 {
+		// Convert browser format to simple map
+		cookies := make(map[string]string, len(browserCookies))
+		for _, cookie := range browserCookies {
+			cookies[cookie.Name] = cookie.Value
+		}
+		return cookies, nil
+	}
+
 	// Fall back to Cookie-Editor format (flat JSON map)
 	var cookies map[string]string
 	if err := json.Unmarshal(data, &cookies); err != nil {
-		return nil, errors.New("unsupported cookie format: unable to parse as J2Team or Cookie-Editor format")
+		return nil, errors.New("unsupported cookie format: unable to parse as J2Team, browser extension, or Cookie-Editor format")
 	}
 
 	if len(cookies) == 0 {
